@@ -34,17 +34,16 @@ The nature of your original system is otherwise unconstrained.
 ## Set-up
 """
 
-# try:
-#     # This library is our indicator that the required installs
-#     # need to be done.
-#     import datasets
-# except ModuleNotFoundError:
-#     !git clone https://github.com/cgpotts/cs224u/
-#     !pip install -r cs224u/requirements.txt
-#     import sys
-#     sys.path.append("cs224u")
+try:
+    # This library is our indicator that the required installs
+    # need to be done.
+    import datasets
+except ModuleNotFoundError:
+    # !git clone https://github.com/cgpotts/cs224u/
+    # !pip install -r cs224u/requirements.txt
+    import sys
+    sys.path.append("cs224u")
 
-import datasets
 
 import os
 import pandas as pd
