@@ -896,6 +896,7 @@ for para in parameters:
     result_df = category_assess(dataset['dev'], t5BaseModel, 'in_distribution')
     acc = result_df.correct.sum() / result_df.shape[0]
     accuracies[para] = acc
+    print('')
     print('parameter:', para, ' accuracy:', acc)
 print(accuracies)
 
