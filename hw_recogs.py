@@ -461,7 +461,7 @@ ex_pred
 Okay, finally, the main interface. If you do not plan to train your own models using our code, then you can treat `RecogsModel` as an interface and not worry about these details.
 """
 
-from torch_model_base import TorchModelBase
+from cs224u.torch_model_base import TorchModelBase
 import torch.nn as nn
 from transformers import EncoderDecoderModel
 
