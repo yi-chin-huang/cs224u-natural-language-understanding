@@ -44,10 +44,12 @@ The nature of your original system is otherwise unconstrained.
 #     import sys
 #     sys.path.append("cs224u")
 
+import sys
+sys.path.append("cs224u")
 
 import os
 import pandas as pd
-from cs224u.compgen import check_set_equal_neoD as recogs_exact_match
+from compgen import check_set_equal_neoD as recogs_exact_match
 
 """The default location of the data:"""
 
@@ -461,7 +463,7 @@ ex_pred
 Okay, finally, the main interface. If you do not plan to train your own models using our code, then you can treat `RecogsModel` as an interface and not worry about these details.
 """
 
-from cs224u.torch_model_base import TorchModelBase
+from torch_model_base import TorchModelBase
 import torch.nn as nn
 from transformers import EncoderDecoderModel
 
@@ -889,9 +891,9 @@ for para in parameters:
     n_iter_no_change=10,
     optimizer_class=torch.optim.Adam,
     eta=para)
-    _ = t5BaseModel.fit(dataset['train'].input[:10], dataset['train'].output)
+    _ = t5BaseModel.fit(dataset['train'].input[:10], dataset['train'].output[:10])
 
-    result_df = category_assess(dataset['dev'].head(100), t5BaseModel, 'in_distribution')
+    result_df = category_assess(dataset['dev'].head(10), t5BaseModel, 'in_distribution')
     acc = result_df.correct.sum() / result_df.shape[0]
     accuracies[para] = acc
     print('parameter:', para, ' accuracy:', acc)
