@@ -34,15 +34,15 @@ The nature of your original system is otherwise unconstrained.
 ## Set-up
 """
 
-try:
-    # This library is our indicator that the required installs
-    # need to be done.
-    import datasets
-except ModuleNotFoundError:
-    !git clone https://github.com/cgpotts/cs224u/
-    !pip install -r cs224u/requirements.txt
-    import sys
-    sys.path.append("cs224u")
+# try:
+#     # This library is our indicator that the required installs
+#     # need to be done.
+#     import datasets
+# except ModuleNotFoundError:
+#     !git clone https://github.com/cgpotts/cs224u/
+#     !pip install -r cs224u/requirements.txt
+#     import sys
+#     sys.path.append("cs224u")
 
 import os
 import pandas as pd
@@ -54,10 +54,10 @@ SRC_DIRNAME = os.path.join("data", "recogs")
 
 """The following code should grab the dataset for you; if it fails for any reason, you can manually download it from [this link](https://web.stanford.edu/class/cs224u/data/recogs.tgz) and then put it in `SRC_DIRNAME`."""
 
-if not os.path.exists(SRC_DIRNAME):
-    !mkdir -p data
-    !wget https://web.stanford.edu/class/cs224u/data/recogs.tgz -P data
-    !tar xvf data/recogs.tgz -C data/
+# if not os.path.exists(SRC_DIRNAME):
+#     !mkdir -p data
+#     !wget https://web.stanford.edu/class/cs224u/data/recogs.tgz -P data
+#     !tar xvf data/recogs.tgz -C data/
 
 """## Load the COGS and ReCOGS datasets"""
 
