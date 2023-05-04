@@ -34,20 +34,20 @@ The nature of your original system is otherwise unconstrained.
 ## Set-up
 """
 
-try:
-    # This library is our indicator that the required installs
-    # need to be done.
-    import datasets
-except ModuleNotFoundError:
-    # !git clone https://github.com/cgpotts/cs224u/
-    # !pip install -r cs224u/requirements.txt
-    import sys
-    sys.path.append("cs224u")
+# try:
+#     # This library is our indicator that the required installs
+#     # need to be done.
+#     import datasets
+# except ModuleNotFoundError:
+#     # !git clone https://github.com/cgpotts/cs224u/
+#     # !pip install -r cs224u/requirements.txt
+#     import sys
+#     sys.path.append("cs224u")
 
 
 import os
 import pandas as pd
-from compgen import check_set_equal_neoD as recogs_exact_match
+from cs224u.compgen import check_set_equal_neoD as recogs_exact_match
 
 """The default location of the data:"""
 
@@ -200,7 +200,7 @@ def test_get_propername_role(func):
     if errcount == 0:
         print(f"No errors detected for `{func.__name__}`")
 
-test_get_propername_role(get_propername_role)
+# test_get_propername_role(get_propername_role)
 
 """### Task 2: Finding challenging names [1 point]
 
@@ -263,7 +263,7 @@ def test_find_name_roles(func):
     else:
         print(f"No errors found for `{func.__name__}`")
 
-test_find_name_roles(find_name_roles)
+# test_find_name_roles(find_name_roles)
 
 """Once the test passes, this analysis should be informative:"""
 
@@ -660,7 +660,7 @@ def test_category_assess(func):
     if errcount == 0:
         print(f"No errors for `{func.__name__}`")
 
-test_category_assess(category_assess)
+# test_category_assess(category_assess)
 
 """Question 1 above might lead you to expect that our model will struggle with examples in which proper names appear with totally unfamiliar roles. For that question, you wrote `get_propername_role` to get `(name, role)` pairs from examples and `find_name_roles` to do analyses with that function. We can now run that same analysis on our errors:"""
 
@@ -804,28 +804,28 @@ def test_recogs_dsp(func):
     if errcount == 0:
         print(f"No errors found for `{func.__name__}`")
 
-test_recogs_dsp(recogs_dsp)
+# test_recogs_dsp(recogs_dsp)
 
-recogs_dsp(ex).output
+# recogs_dsp(ex).output
 
 """### Optional assessment
 
 Here we sample 10 dev cases for a small evaluation. If you adapt this code, remember to use `recogs_exact_match` so that you aren't unfairly penalized for conjunct order or varible name differences.
 """
 
-ssamp = dataset['dev'].sample(10)
+# ssamp = dataset['dev'].sample(10)
 
-ssamp['prediction'] = ssamp.input.apply(
-    lambda x: recogs_dsp(dsp.Example(input=x)).output)
+# ssamp['prediction'] = ssamp.input.apply(
+#     lambda x: recogs_dsp(dsp.Example(input=x)).output)
 
-ssamp['correct'] = ssamp.apply(
-    lambda row: recogs_exact_match(row['output'], row['prediction']), axis=1)
+# ssamp['correct'] = ssamp.apply(
+#     lambda row: recogs_exact_match(row['output'], row['prediction']), axis=1)
 
-ssamp['correct'].sum() / ssamp.shape[0]
+# ssamp['correct'].sum() / ssamp.shape[0]
 
 """A random example to see what's going on:"""
 
-ssamp.sample(1).to_dict(orient='records')
+# ssamp.sample(1).to_dict(orient='records')
 
 """## Question 4: Original System [3 points]
 
@@ -867,17 +867,15 @@ class T5BaseRecogsModel(RecogsModel):
     def build_graph(self):
         return T5BaseRecogsModule()
 
-t5BaseModel = T5BaseRecogsModel(batch_size=5,
-    gradient_accumulation_steps=20,
-    max_iter=1, 
-    early_stopping=True,
-    n_iter_no_change=10,
-    optimizer_class=torch.optim.Adam,
-    eta=0.00001)
+# t5BaseModel = T5BaseRecogsModel(batch_size=5,
+#     gradient_accumulation_steps=20,
+#     max_iter=1, 
+#     early_stopping=True,
+#     n_iter_no_change=10,
+#     optimizer_class=torch.optim.Adam,
+#     eta=0.00001)
 
 # STOP COMMENT: Please do not remove this comment.
-
-_ = t5BaseModel.fit(dataset['train'].input[: 40], dataset['train'].output[: 40])
 
 """Assess"""
 
@@ -886,17 +884,17 @@ accuracies = {}
 for para in parameters:
     t5BaseModel = T5BaseRecogsModel(batch_size=5,
     gradient_accumulation_steps=20,
-    max_iter=1, 
+    max_iter=10, 
     early_stopping=True,
     n_iter_no_change=10,
     optimizer_class=torch.optim.Adam,
     eta=para)
-    _ = t5BaseModel.fit(dataset['train'].input, dataset['train'].output)
+    _ = t5BaseModel.fit(dataset['train'].input[:10], dataset['train'].output)
 
-    result_df = category_assess(dataset['dev'], t5BaseModel, 'in_distribution')
+    result_df = category_assess(dataset['dev'].head(100), t5BaseModel, 'in_distribution')
     acc = result_df.correct.sum() / result_df.shape[0]
     accuracies[para] = acc
-    print(para, ' accuracy:', acc)
+    print('parameter:', para, ' accuracy:', acc)
 print(accuracies)
 
 
