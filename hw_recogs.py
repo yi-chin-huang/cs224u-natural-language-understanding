@@ -753,7 +753,7 @@ ex = dsp.Example(
     input=dataset['train'].input[0],
     demos=dsp.sample(dsp_recogs_train, k=2))
 
-print(cogs_template(ex))
+# print(cogs_template(ex))
 
 dataset['train']
 
@@ -886,14 +886,14 @@ accuracies = {}
 for para in parameters:
     t5BaseModel = T5BaseRecogsModel(batch_size=5,
     gradient_accumulation_steps=20,
-    max_iter=10, 
+    max_iter=1, 
     early_stopping=True,
     n_iter_no_change=10,
     optimizer_class=torch.optim.Adam,
     eta=para)
-    _ = t5BaseModel.fit(dataset['train'].input[:10], dataset['train'].output[:10])
+    _ = t5BaseModel.fit(dataset['train'].input, dataset['train'].output)
 
-    result_df = category_assess(dataset['dev'].head(10), t5BaseModel, 'in_distribution')
+    result_df = category_assess(dataset['dev'], t5BaseModel, 'in_distribution')
     acc = result_df.correct.sum() / result_df.shape[0]
     accuracies[para] = acc
     print('parameter:', para, ' accuracy:', acc)
