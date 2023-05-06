@@ -696,115 +696,115 @@ For this question, we are going to switch gears, from using our trained ReCOGS m
 Standard set-up for DSP, but we don't need a retriever:
 """
 
-import cohere
-from datasets import load_dataset
-import openai
-import os
-import dsp
+# import cohere
+# from datasets import load_dataset
+# import openai
+# import os
+# import dsp
 
-root_path = '.'
+# root_path = '.'
 
-os.environ["DSP_NOTEBOOK_CACHEDIR"] = os.path.join(root_path, 'cache')
+# os.environ["DSP_NOTEBOOK_CACHEDIR"] = os.path.join(root_path, 'cache')
 
-openai_key = os.getenv('OPENAI_API_KEY')  # or replace with your API key (optional)
+# openai_key = os.getenv('OPENAI_API_KEY')  # or replace with your API key (optional)
 
-cohere_key = 'NOvHZj1s5IKjdkBfqPTqB52oR5vuyzhY7yuK03HE'  # or replace with your API key (optional)
+# cohere_key = 'NOvHZj1s5IKjdkBfqPTqB52oR5vuyzhY7yuK03HE'  # or replace with your API key (optional)
 
-"""Our language model:"""
+# """Our language model:"""
 
-# Options for Cohere: command-medium-nightly, command-xlarge-nightly
-lm = dsp.Cohere(model='command-xlarge-nightly', api_key=cohere_key)
+# # Options for Cohere: command-medium-nightly, command-xlarge-nightly
+# lm = dsp.Cohere(model='command-xlarge-nightly', api_key=cohere_key)
 
-# Options for OpenAI:
-# [d["root"] for d in openai.Model.list()["data"]]
-# lm = dsp.GPT3(model='text-davinci-001', api_key=openai_key)
+# # Options for OpenAI:
+# # [d["root"] for d in openai.Model.list()["data"]]
+# # lm = dsp.GPT3(model='text-davinci-001', api_key=openai_key)
 
-"""DSP settings:"""
+# """DSP settings:"""
 
-dsp.settings.configure(lm=lm)
+# dsp.settings.configure(lm=lm)
 
-"""### Train examples in DSP format
+# """### Train examples in DSP format
 
-This will convert the train set into a list of `dsp.Example` instances to use for demonstrations:
-"""
+# This will convert the train set into a list of `dsp.Example` instances to use for demonstrations:
+# """
 
-dsp_recogs_train = [dsp.Example(input=row['input'], output=row['output'])
-                    for _, row in dataset['train'].iterrows()]
+# dsp_recogs_train = [dsp.Example(input=row['input'], output=row['output'])
+#                     for _, row in dataset['train'].iterrows()]
 
-"""### Basic template"""
+# """### Basic template"""
 
-Input = dsp.Type(
-    prefix="Input:", 
-    desc="${the sentence to be translated}")
+# Input = dsp.Type(
+#     prefix="Input:", 
+#     desc="${the sentence to be translated}")
 
-Output = dsp.Type(
-    prefix="Output:", 
-    desc="${a logical form}",
-    format=dsp.format_answers)
+# Output = dsp.Type(
+#     prefix="Output:", 
+#     desc="${a logical form}",
+#     format=dsp.format_answers)
 
-cogs_template = dsp.Template(
-    instructions="Translate sentences into logical forms.",
-    input=Input(),
-    output=Output())
+# cogs_template = dsp.Template(
+#     instructions="Translate sentences into logical forms.",
+#     input=Input(),
+#     output=Output())
 
-"""Quick illustration:"""
+# """Quick illustration:"""
 
-ex = dsp.Example(
-    input=dataset['train'].input[0],
-    demos=dsp.sample(dsp_recogs_train, k=2))
+# ex = dsp.Example(
+#     input=dataset['train'].input[0],
+#     demos=dsp.sample(dsp_recogs_train, k=2))
 
-# print(cogs_template(ex))
+# # print(cogs_template(ex))
 
-dataset['train']
+# dataset['train']
 
-"""### Task
+# """### Task
 
-Your task is just to complete the following very basic DSP program. The steps are laid out for you:
-"""
+# Your task is just to complete the following very basic DSP program. The steps are laid out for you:
+# """
 
-@dsp.transformation
-def recogs_dsp(example, train=dsp_recogs_train, k=2): 
-    # Step 1: Sample k train cases and add them to the `demos`
-    # attribute of `example`:
-    ##### YOUR CODE HERE
-    example.demos = dsp.sample(train, k=k)
-
-
-
-    # Run your program using `cogs_template`:
-    ##### YOUR CODE HERE
-    example, completions = dsp.generate(cogs_template)(example, stage='qa')
+# @dsp.transformation
+# def recogs_dsp(example, train=dsp_recogs_train, k=2): 
+#     # Step 1: Sample k train cases and add them to the `demos`
+#     # attribute of `example`:
+#     ##### YOUR CODE HERE
+#     example.demos = dsp.sample(train, k=k)
 
 
-    # Return the `dsp.Completions`:
-    ##### YOUR CODE HERE
-    return completions
 
-"""A quick test:"""
+#     # Run your program using `cogs_template`:
+#     ##### YOUR CODE HERE
+#     example, completions = dsp.generate(cogs_template)(example, stage='qa')
 
-def test_recogs_dsp(func):
-    k = 3
-    ex = dsp.Example(input="Q0", output=["A0"])
-    train = [
-        dsp.Example(input="Q1", output=["A1"]),
-        dsp.Example(input="Q2", output=["A2"]),
-        dsp.Example(input="Q3", output=["A3"]),
-        dsp.Example(input="Q4", output=["A4"])]
-    compl = func(ex, train=train, k=k)
-    errcount = 0
-    # Check the LM was used as expected:
-    if len(compl.data) != 1:
-        errcount += 1
-        print(f"Error for `{func.__name__}`: Unexpected LM output.")
-    data = compl.data[0]
-    # Check that the right number of demos was used:
-    demos = data['demos']
-    if len(demos) != k:
-        errcount += 1
-        print(f"Error for `{func.__name__}`: "
-              f"Unexpected demo count: {len(demos)}")
-    if errcount == 0:
-        print(f"No errors found for `{func.__name__}`")
+
+#     # Return the `dsp.Completions`:
+#     ##### YOUR CODE HERE
+#     return completions
+
+# """A quick test:"""
+
+# def test_recogs_dsp(func):
+#     k = 3
+#     ex = dsp.Example(input="Q0", output=["A0"])
+#     train = [
+#         dsp.Example(input="Q1", output=["A1"]),
+#         dsp.Example(input="Q2", output=["A2"]),
+#         dsp.Example(input="Q3", output=["A3"]),
+#         dsp.Example(input="Q4", output=["A4"])]
+#     compl = func(ex, train=train, k=k)
+#     errcount = 0
+#     # Check the LM was used as expected:
+#     if len(compl.data) != 1:
+#         errcount += 1
+#         print(f"Error for `{func.__name__}`: Unexpected LM output.")
+#     data = compl.data[0]
+#     # Check that the right number of demos was used:
+#     demos = data['demos']
+#     if len(demos) != k:
+#         errcount += 1
+#         print(f"Error for `{func.__name__}`: "
+#               f"Unexpected demo count: {len(demos)}")
+#     if errcount == 0:
+#         print(f"No errors found for `{func.__name__}`")
 
 # test_recogs_dsp(recogs_dsp)
 
