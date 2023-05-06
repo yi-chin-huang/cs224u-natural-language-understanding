@@ -850,7 +850,7 @@ from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 class T5BaseRecogsModule(nn.Module):
     def __init__(self):
         super().__init__()
-        self.encdec = AutoModelForSeq2SeqLM.from_pretrained("t5-base")
+        self.encdec = AutoModelForSeq2SeqLM.from_pretrained("t5-small")
 
     def forward(self, X_pad, X_mask, y_pad, y_mask, labels=None):
         outputs = self.encdec(
@@ -863,7 +863,7 @@ class T5BaseRecogsModule(nn.Module):
 class T5BaseRecogsModel(RecogsModel):
     def __init__(self, *args, initialize=True, **kwargs):
         super().__init__(*args, **kwargs)
-        self.enc_tokenizer = AutoTokenizer.from_pretrained("t5-base")
+        self.enc_tokenizer = AutoTokenizer.from_pretrained("t5-small")
         self.dec_tokenizer = self.enc_tokenizer
 
     def build_graph(self):
@@ -881,24 +881,38 @@ class T5BaseRecogsModel(RecogsModel):
 
 """Assess"""
 
-parameters = [0.00001]
-accuracies = {}
+def test_gen_acc(model, cnt):
+    cats = dataset['gen'].head(cnt).category.unique()
+    avg_acc = 0
+    for cat in cats:
+        result_df = category_assess(dataset['gen'].head(cnt), model, cat)
+        acc = result_df.correct.sum() / result_df.shape[0]
+        avg_acc += acc
+        print('catrgory:', cat)
+        print('accuracy:', acc)
+    avg_acc /= len(cats)
+    print(avg_acc)
+    return avg_acc
+
+parameters = [0.00001, 0.00005]
+best_model = None
+best_acc = 0
 for para in parameters:
     t5BaseModel = T5BaseRecogsModel(batch_size=5,
     gradient_accumulation_steps=20,
-    max_iter=1, 
+    max_iter=5, 
     early_stopping=True,
     n_iter_no_change=10,
     optimizer_class=torch.optim.Adam,
     eta=para)
     _ = t5BaseModel.fit(dataset['train'].input, dataset['train'].output)
+    
+    torch.save(t5BaseModel, 't5Model_' + para + '_5')
+    acc = test_gen_acc(t5BaseModel, 1000)
+    if acc > best_acc:
+        best_model = t5BaseModel
+        acc = best_acc
 
-    result_df = category_assess(dataset['dev'], t5BaseModel, 'in_distribution')
-    acc = result_df.correct.sum() / result_df.shape[0]
-    accuracies[para] = acc
-    print('')
-    print('parameter:', para, ' accuracy:', acc)
-print(accuracies)
 
 
 """Here are some potential paths – just a few of many options, though!
@@ -980,13 +994,16 @@ This is very easy to do. For example, here we do some training on the first 10 d
 # Here we read in the bakeoff dataset:
 # """
 
-# bakeoff_df = pd.read_csv(
-#     os.path.join(SRC_DIRNAME, "cs224u-recogs-test-unlabeled.tsv"), 
-#     sep="\t", index_col=0)
+bakeoff_df = pd.read_csv(
+    os.path.join(SRC_DIRNAME, "cs224u-recogs-test-unlabeled.tsv"), 
+    sep="\t", index_col=0)
+
+preds = best_model.predict(bakeoff_df.input)
+bakeoff_df['prediction'] = preds
 
 # """For the bakeoff entry, you should add a column "prediction" containing your predicted LFs and then use the following command to write the file to disk:"""
 
-# bakeoff_df.to_csv("cs224u-recogs-bakeoff-entry.tsv", sep="\t")
+bakeoff_df.to_csv("cs224u-recogs-bakeoff-entry.tsv", sep="\t")
 
 # """Here is what the first couple of lines of the file should look like:
 
@@ -999,37 +1016,37 @@ This is very easy to do. For example, here we do some training on the first 10 d
 # where `PREDICTED LF` is what you predicted. Here is a quick test you can run locally to ensure that the autograder won't fail:
 # """
 
-# def test_bakeoff_file(filename="cs224u-recogs-bakeoff-entry.tsv"):
-#     ref_filename = os.path.join(SRC_DIRNAME, "cs224u-recogs-test-unlabeled.tsv")
-#     ref_df = pd.read_csv(ref_filename, sep="\t", index_col=0)
+def test_bakeoff_file(filename="cs224u-recogs-bakeoff-entry.tsv"):
+    ref_filename = os.path.join(SRC_DIRNAME, "cs224u-recogs-test-unlabeled.tsv")
+    ref_df = pd.read_csv(ref_filename, sep="\t", index_col=0)
 
-#     entry_df = pd.read_csv(filename, sep="\t", index_col=0)
+    entry_df = pd.read_csv(filename, sep="\t", index_col=0)
 
-#     errcount = 0
+    errcount = 0
 
-#     # Check expected columns:
-#     expected_cols = ["input", "category", "prediction"]
-#     for col in expected_cols:
-#         if col not in entry_df.columns:
-#             errcount += 1
-#             print(f"Missing column: {col}")
-#     if errcount > 0:
-#         return
+    # Check expected columns:
+    expected_cols = ["input", "category", "prediction"]
+    for col in expected_cols:
+        if col not in entry_df.columns:
+            errcount += 1
+            print(f"Missing column: {col}")
+    if errcount > 0:
+        return
 
-#     # Use the "category" column as a check that the rows have not
-#     # been shuffled:
-#     if not entry_df.category.equals(ref_df.category):
-#         errcount += 1
-#         print("Rows do not seem to be aligned with reference file. "
-#               "Might they have gotten shuffled?")
+    # Use the "category" column as a check that the rows have not
+    # been shuffled:
+    if not entry_df.category.equals(ref_df.category):
+        errcount += 1
+        print("Rows do not seem to be aligned with reference file. "
+              "Might they have gotten shuffled?")
 
-#     # Check that the predictions all have type str:
-#     for line_num, x in enumerate(entry_df.prediction, start=1):
-#         if not isinstance(x, str):
-#             errcount += 1
-#             print(f"Prediction on line {line_num} is not a str: {x}")
+    # Check that the predictions all have type str:
+    for line_num, x in enumerate(entry_df.prediction, start=1):
+        if not isinstance(x, str):
+            errcount += 1
+            print(f"Prediction on line {line_num} is not a str: {x}")
 
-#     if errcount == 0:
-#         print("Bakeoff file seems to be in good shape!")
+    if errcount == 0:
+        print("Bakeoff file seems to be in good shape!")
 
-# test_bakeoff_file()
+test_bakeoff_file()
